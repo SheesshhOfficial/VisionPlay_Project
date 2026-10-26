@@ -1,0 +1,19 @@
+Build verification - 26 October 2026
+
+PASSED in isolated Linux cloud Python 3.12 environment:
+- Installation of requirements.txt pinned top-level dependencies.
+- pip check: no broken requirements.
+- Official Google model download and SHA256 verification.
+- Native MediaPipe task creation + inference on a blank RGB frame.
+- Four automated software tests (unittest): game outcomes, feature
+  normalization, insufficient-data handling, session-separated evaluation.
+- Python compilation.
+
+Not verified here: Windows BAT execution, physical webcam capture,
+Windows display/keyboard handling, or real-gesture recognition accuracy.
+The setup.bat smoke test repeats dependency/model checks on your laptop.
+Run a real webcam round before class.
+
+Synthetic test data exists only temporarily during software tests.
+No user dataset, trained SVM, or fabricated accuracy is shipped.
+The official model is fetched during setup, not included in the ZIP.

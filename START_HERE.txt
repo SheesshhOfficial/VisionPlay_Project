@@ -1,0 +1,21 @@
+VISIONPLAY - AI ROCK, PAPER, SCISSORS
+
+1. Extract the entire ZIP to a writable folder.
+2. Install 64-bit Python 3.11 if needed:
+   https://www.python.org/downloads/release/python-3119/
+   Choose Windows installer (64-bit), with the Python launcher enabled.
+3. Double-click setup.bat. Internet is required for initial setup.
+4. Double-click runme.bat. Click the camera window, then press SPACE.
+
+Fist = ROCK    Open palm = PAPER    V sign = SCISSORS
+
+Game works immediately with Google's pretrained neural model.
+To demonstrate YOUR classical ML model: capture 1, 2, 3, then N;
+repeat twice (three sessions total); press T to train, M to use SVM.
+Press E for your real held-out test results. Q quits.
+
+Read README.md for details and TEACHER_GUIDE.md before presenting.
+These are plain text files; Notepad can open them.
+
+No webcam photos are saved or uploaded. No administrator access needed.
+Windows webcam/GUI must be tested on your laptop before class.
