@@ -1,0 +1,17 @@
+# Local environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+# Downloaded model and personal training data
+models/*.task
+models/*.download
+data/
+# Local secrets and machine files
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
