@@ -4,18 +4,32 @@ VISIONPLAY - AI ROCK, PAPER, SCISSORS
 2. Install 64-bit Python 3.11 if needed:
    https://www.python.org/downloads/release/python-3119/
    Choose Windows installer (64-bit), with the Python launcher enabled.
+   Python 3.10-3.12 x64 is supported; keep newer Python alongside it.
 3. Double-click setup.bat. Internet is required for initial setup.
-4. Double-click runme.bat. Click the camera window, then press SPACE.
+4. Double-click runme.bat. Click Play or press SPACE.
 
 Fist = ROCK    Open palm = PAPER    V sign = SCISSORS
 
-Game works immediately with Google's pretrained neural model.
-To demonstrate YOUR classical ML model: capture 1, 2, 3, then N;
-repeat twice (three sessions total); press T to train, M to use SVM.
-Press E for your real held-out test results. Q quits.
+FIRST TO THREE WINS. Ties do not count.
+The computer locks its hidden random move before the 3-second countdown.
+Hold your pose steady. An unstable pose gets up to 1.5 extra seconds;
+if still invalid, the round is canceled without scoring.
+R / New match resets. Q quits.
 
-Read README.md for details and TEACHER_GUIDE.md before presenting.
-These are plain text files; Notepad can open them.
+TRAIN YOUR OWN SVM (optional; pretrained mode works immediately)
+G / Guided training opens the step-by-step collector.
+Capture / C / SPACE records 40 samples of the displayed pose.
+Click Next between rock, paper, scissors, and each of 3 sessions.
+Keep the correct pose during capture; reposition between sessions.
+Cancel capture or Back / ESC stops collection but keeps saved samples.
+T / Train trains the SVM. M switches the game's classifier.
+Old 1 / 2 / 3 / N capture keys are no longer used.
+
+E / Teacher view shows the pipeline and your real evaluation results.
+Back / ESC returns to the game.
+Read TEACHER_GUIDE.md for a one-minute script and README.md for details.
+Notepad can open both files.
 
 No webcam photos are saved or uploaded. No administrator access needed.
-Windows webcam/GUI must be tested on your laptop before class.
+The earlier version worked on the user's webcam. This upgrade has cloud
+checks only so far: test this version on your Windows laptop before class.

@@ -10,7 +10,7 @@ A small webcam project combining **computer vision, pretrained deep learning, an
 2. Use **64-bit Python 3.10, 3.11, or 3.12**. If none is installed, the [Python 3.11.9 release page](https://www.python.org/downloads/release/python-3119/) has a compatible **Windows installer (64-bit)**. Enable the Python launcher in the installer. This package targets Windows x64; ARM and 32-bit Python are not supported.
 3. Double-click **`setup.bat`**. Keep its window open until it reports success. Internet is needed to install Python packages and download the official Google model. Setup uses a project-local virtual environment; it does not need administrator access or change PowerShell policy.
 4. Double-click **`runme.bat`**. Allow camera access if Windows asks. Click the video window so it receives keyboard input.
-5. Show one hand, palm toward the camera, with good lighting. Press **Space** and hold a pose through the three-second countdown.
+5. Show one hand, palm toward the camera, with good lighting. Click **Play** or press **Space**, and hold a pose through the three-second countdown.
 
 After successful setup, the webcam demo runs locally without an Internet connection. No account or API key is needed. Do setup and a test round **before** your classroom demonstration.
 
@@ -22,39 +22,46 @@ After successful setup, the webcam demo runs locally without an Internet connect
 | Paper | Open palm, fingers spread | `Open_Palm` |
 | Scissors | Index and middle fingers in a V | `Victory` |
 
-The computer chooses a random move. This is not an AI that predicts your strategy.
+## Play a match
 
-## Controls
+**First to three wins** takes the match: best of five **decisive** rounds. Ties do not count toward that limit, so a match can contain more than five rounds in total.
+
+Click **Play** or press **Space**. The computer locks its random move **before** the three-second countdown and keeps it hidden until the reveal. Hold your gesture steady. If recognition is not stable at the countdown's end, you get up to **1.5 extra seconds** to settle your hand; if it is still not valid and stable, the round is canceled with **no score**. Start another round when ready. Click **New match** or press **R** to reset.
+
+The computer does not predict your strategy. The screen shows both available classifier predictions; **M** chooses which one controls your move.
+
+## Mouse and keyboard controls
+
+Use the on-screen buttons, or click the window and use these shortcuts:
 
 | Key | Action |
 |---|---|
-| **Space** | Start a three-second round |
-| **M** | Switch between pretrained recognition and your trained SVM |
-| **1 / 2 / 3** | Capture a batch for rock / paper / scissors |
-| **N** | Start a new capture session |
-| **T** | Train and evaluate the SVM from your recorded examples |
-| **E** | Show/hide held-out evaluation score, counts, and confusion matrix |
-| **R** | Reset game scores |
+| **Space** | Play a round; in guided training, capture the current stage |
+| **G** | Open guided sample collection |
+| **C** | Capture the current stage in guided training |
+| **T** | Train/evaluate the SVM from saved samples |
+| **E** | Open teacher view: pipeline, held-out results, and confusion matrix |
+| **M** | Switch pretrained/SVM game mode |
+| **R** | Start a new match |
+| **Escape** | Back from teacher/training view; stops an active capture without deleting saved samples |
 | **Q** | Quit |
 
-The screen shows both available predictions; **M** chooses which classifier controls the game.
+Guided collection uses explicit **Next** buttons between stages and sessions—there is no automatic advance into the next pose. The old **1/2/3/N** capture shortcuts are no longer used.
 
-A trained SVM is not supplied: **you create it from real examples**. Pretrained mode works first, without collecting data.
+## Add your classical ML model — guided training
 
-## Add the classical ML demonstration — about 5 minutes
+A trained SVM is not supplied: **you create it from real examples**. Pretrained mode works immediately after setup.
 
-Training only needs landmark coordinates, not stored photographs.
+1. Click **Guided training** or press **G**. Follow the displayed pose: **rock → paper → scissors**.
+2. Hold that pose and click **Capture** (or press **C/Space**). Each stage targets **40 detected-hand samples**. Wait for the preparation countdown, then keep the same pose throughout capture; gently vary position without changing the gesture.
+3. Click **Next** when ready for the next pose. After all three poses, explicitly advance to the next session. Repeat for **three sessions**. Reposition your hand and vary distance or lighting moderately between sessions; use the same hand and palm orientation initially.
+4. Use **Cancel capture** to stop a batch, or **Back/Escape** to leave training. Samples already written to CSV are preserved; canceling is not deletion. Use the screen's status to see the next step.
+5. Click **Train** or press **T**. For compatibility with existing data, training requires at least **three complete sessions**, each with **20 or more examples of every class**; the new guided flow targets 40 per class per session.
+6. Click **Teacher view** or press **E** for the pipeline and your measured results (also saved in `data/evaluation.json`). Return with **Back/Escape**, then switch to **SVM** using its button or **M** and play.
 
-1. Start a capture session. Hold **rock**, press **1**, and keep the pose while moving your hand gently within view. A batch targets **40 samples**, after a two-second preparation delay, approximately eight seconds when the hand remains detected. Do not change to another gesture during a batch.
-2. Repeat with **paper → 2** and **scissors → 3**.
-3. Press **N** for a new session. Change hand position/distance or lighting a little, and repeat all three batches. Use the same hand and palm orientation initially.
-4. Press **N** again and collect all three gestures a third time. Make this a realistic independent test: lower your hand between batches and reposition it, rather than recording one continuous pose across sessions.
-5. Press **T**. Training requires **at least three complete sessions**, each with **at least 20 examples of every class**. The newest complete session is held out for evaluation; earlier sessions train the evaluation model.
-6. Press **E** to inspect the on-screen evaluation, or read `data/evaluation.json`. Press **M** to try the SVM in the game.
+The newest complete session is held out; earlier complete sessions train the evaluation model. Incomplete sessions are excluded. After evaluation, the live SVM is refit on all complete sessions. The held-out score therefore describes the evaluation model, **not an independent test of the refitted live model**.
 
-The evaluation model never trains on its held-out session. After evaluation, a separate deployment model is refit on all complete sessions so the game can use all complete sessions. Therefore the held-out score describes the evaluation model, **not an independent test of the refitted deployment model**. Collect a genuinely new session for further testing.
-
-Do not present a high score as universal accuracy: nearby video frames are correlated, and your samples probably represent one person, one camera, and a few lighting conditions. A session split reduces leakage but does not establish performance for new people.
+Nearby video frames are correlated. A session split reduces leakage but a small personal dataset does not establish accuracy for new people or conditions. Do not repeatedly tune against the same holdout; test improvements on a genuinely new session.
 
 ## What each subject contributes
 
@@ -63,7 +70,9 @@ Do not present a high score as universal accuracy: nearby video frames are corre
 - **Classical machine learning (scikit-learn):** an SVM learns your three gesture classes from normalized landmark coordinates. These are **deep-learning-extracted features**, not raw pixels. This is a hybrid pipeline, not a separately trained image CNN.
 - **Ordinary programming:** countdown, random computer move, game rules, and scorekeeping. These are not machine learning.
 
-See **`TEACHER_GUIDE.md`** for a short explanation and demonstration script.
+See **`TEACHER_GUIDE.md`** for a one-minute demonstration script and viva questions.
+
+**Verification:** the earlier webcam version was tested on Windows. This upgraded interface has been developed and checked in the cloud; that is not a Windows webcam acceptance test. Test this version on your laptop before class.
 
 ## Privacy and files
 
@@ -81,7 +90,7 @@ If an old `.venv` is broken or uses an unsupported version, setup stops without 
 - **Setup fails:** read the final error. Check Internet access and available disk space; rerun setup. Do not disable antivirus or run as administrator as a workaround. If a school network blocks package/model downloads, complete setup on an allowed network before class.
 - **Camera unavailable:** close Teams, Zoom, browsers, and other camera apps. In Windows Settings → Privacy & security → Camera, allow desktop apps to access the camera. To try camera index 1, open Command Prompt in this folder and run `runme.bat 1` (default is 0).
 - **Window opens then closes:** run `runme.bat` from Command Prompt and read the error rather than repeatedly double-clicking.
-- **Keys do nothing:** click the live video window. Use the number keys above the letters if the numeric keypad is unreliable.
+- **Keys do nothing:** click the app window to give it focus, or use its on-screen buttons. Capture shortcuts only apply in guided training.
 - **No gesture / unstable recognition:** use one hand, show the full palm and fingertips, improve front lighting, move away from the frame edge, and hold the gesture still for the countdown. Other gestures are not valid game moves.
 - **SVM unavailable:** first collect three complete sessions and press T. Incomplete or unbalanced recordings cannot produce an honest three-class evaluation.
 - **SVM mistakes:** use the hand/orientation you trained with, add varied correctly labeled examples, then retrain. The SVM can misclassify gestures outside its three trained classes; its decision is not proof of certainty.

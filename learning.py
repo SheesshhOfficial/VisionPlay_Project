@@ -40,13 +40,13 @@ def estimator():
 
 def train(path, report_path):
     if not Path(path).exists():
-        raise ValueError('Collect samples first: 1, 2, 3 in each of 3 sessions (N).')
+        raise ValueError('Open Guided Training and capture all 3 poses in 3 sessions first.')
     x, y, groups = read_samples(path)
     sessions = list(dict.fromkeys(groups))
     counts = Counter(zip(groups, y))
     complete = [s for s in sessions if all(counts[s, label] >= 20 for label in LABELS)]
     if len(complete) < 3:
-        raise ValueError('Need 3 complete sessions: collect 1, 2, 3; N; repeat twice.')
+        raise ValueError('Need 3 complete sessions. Use Capture / Next in the training wizard.')
     # Incomplete sessions are excluded so every session represents every class.
     valid = np.isin(groups, complete)
     test = valid & (groups == complete[-1])

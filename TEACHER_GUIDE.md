@@ -27,19 +27,23 @@ Webcam → OpenCV frames → MediaPipe pretrained neural models
 
 ## Before class
 
-Run `setup.bat`, then `runme.bat`, and test the webcam. For an explicit classical-ML demonstration, collect all three gestures in **three sessions**: keys **1/2/3** capture rock/paper/scissors, **N** starts another session, and **T** trains. Each session needs at least 20 examples of every class. A batch targets 40 samples after a two-second preparation delay.
+Run `setup.bat`, then `runme.bat`, and test **this upgraded version** with your webcam before class. The previous version was webcam-tested on Windows; cloud checks of this upgrade do not replace a Windows webcam test.
 
-Hold the correct gesture for the whole batch. Between sessions, reposition yourself and vary distance or lighting moderately. Do not treat nearly identical consecutive frames as independent evidence.
+Click **Guided training** or press **G**. Capture 40 samples for **rock → paper → scissors**, using the **Capture** button or **C/Space**. Click **Next** between stages and sessions. Complete **three sessions**, then click **Train** or press **T**. Training accepts older datasets with at least 20 examples of every class in each of three complete sessions.
+
+Hold the assigned pose for a whole batch. Reposition yourself between sessions and vary distance or lighting moderately. **Cancel capture** or **Back/Escape** stops collection but preserves samples already saved. Old 1/2/3/N capture shortcuts are removed.
 
 ## One-minute demonstration
 
 **0–15 seconds:** “This is VisionPlay. OpenCV handles my webcam, and Google's pretrained deep-learning models detect my hand and its 21 landmarks.” Show a fist, open palm, and V sign.
 
-**15–30 seconds:** “In pretrained mode, I use Google's gesture labels.” Press **Space** and play a round. “The computer chooses randomly; it does not predict my strategy.”
+**15–30 seconds:** “In pretrained mode, I use Google's gesture labels.” Click **Play** or press **Space**. “The computer locks a hidden random move before the countdown, then reveals it. First to three wins; ties do not count.”
 
 **30–45 seconds:** Press **M**. “This mode uses an SVM I trained on my own labeled landmark samples. It learns from numerical hand-shape features, not raw photographs.” Only say this if you actually collected data and trained it.
 
-**45–60 seconds:** Press **E** to show the evaluation panel (also saved as `data/evaluation.json`). “I held out a complete capture session for evaluation rather than mixing adjacent frames. These are my measured results, not a guarantee for other people or conditions.”
+**45–60 seconds:** Click **Teacher view** or press **E** to show the pipeline and evaluation (also saved as `data/evaluation.json`). “I held out a complete capture session for evaluation rather than mixing adjacent frames. These are my measured results, not a guarantee for other people or conditions.”
+
+Return from teacher view with **Back/Escape**. If a pose is unstable after the three-second countdown, the game waits up to 1.5 seconds longer; if still invalid, it cancels with no score. **R/New match** resets the match.
 
 If no SVM has been trained, say: **“The SVM workflow is implemented, but I have not trained it yet.”** The pretrained game alone does not demonstrate your own classical classifier.
 
