@@ -1,5 +1,7 @@
 """Synthetic software tests only; these are NOT gesture accuracy measurements."""
 import unittest
+import runpy
+from unittest.mock import patch
 import tempfile
 import sys
 from pathlib import Path
@@ -9,6 +11,16 @@ from core import features, outcome, LABELS
 from learning import add_sample, train
 
 class ProjectTests(unittest.TestCase):
+    def test_python_version_guard(self):
+        script = Path(__file__).resolve().parents[1] / 'check_python.py'
+        with patch.object(sys, 'version_info', (3, 13, 0)):
+            with self.assertRaises(SystemExit) as exc: runpy.run_path(str(script))
+            self.assertEqual(exc.exception.code, 1)
+    def test_venv_guard(self):
+        script = Path(__file__).resolve().parents[1] / 'check_python.py'
+        with patch.object(sys, 'argv', [str(script), '--venv']), patch.object(sys, 'version_info', (3, 11, 9)), patch.object(sys, 'prefix', sys.base_prefix):
+            with self.assertRaises(SystemExit) as exc: runpy.run_path(str(script))
+            self.assertEqual(exc.exception.code, 1)
     def test_outcomes(self):
         expected = [['draw','lose','win'],['win','draw','lose'],['lose','win','draw']]
         for i,a in enumerate(LABELS):

@@ -5,8 +5,9 @@ PASSED in isolated Linux cloud Python 3.12 environment:
 - pip check: no broken requirements.
 - Official Google model download and SHA256 verification.
 - Native MediaPipe task creation + inference on a blank RGB frame.
-- Four automated software tests (unittest): game outcomes, feature
-  normalization, insufficient-data handling, session-separated evaluation.
+- Six automated software tests (unittest): game outcomes, feature
+  normalization, insufficient-data handling, session-separated evaluation,
+  unsupported-Python rejection, and non-venv rejection.
 - Python compilation.
 
 Not verified here: Windows BAT execution, physical webcam capture,

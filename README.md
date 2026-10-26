@@ -69,6 +69,12 @@ See **`TEACHER_GUIDE.md`** for a short explanation and demonstration script.
 
 Webcam frames stay in memory on your laptop; this app does not record or upload images. Capturing examples writes labeled numerical hand landmarks locally in `data/samples.csv`. Training saves `data/evaluation.json`; the SVM is refit in memory from `data/samples.csv` on startup when sufficient data exists. Incomplete sessions are excluded from fitting and evaluation. No serialized SVM model is loaded. Network access is used by setup to obtain dependencies and Google's pretrained model, not to analyze your webcam.
 
+## How the virtual environment works
+
+A venv isolates packages; it **cannot install Python 3.11 itself**. Install the base interpreter once, side by side with any newer Python. `setup.bat` checks the Python launcher, standard per-user Python folders, and executables on PATH. It then creates `.venv` in this project and installs packages only there. You do not need to activate it: both BAT files use its interpreter directly. A valid existing environment is reused.
+
+If an old `.venv` is broken or uses an unsupported version, setup stops without deleting anything. Close the app, rename `.venv` to `.venv-backup` in File Explorer, and rerun setup. This preserves `data/` samples and the downloaded `models/` file. Backup environments are ignored by Git. Do not copy a venv between computers or move it out of the project; recreate it instead.
+
 ## Troubleshooting
 
 - **No supported Python:** install x64 Python 3.10, 3.11, or 3.12, then rerun `setup.bat`. Python 3.13+ is outside this package's pinned support range. `py -0p` in Command Prompt lists launcher installations.
