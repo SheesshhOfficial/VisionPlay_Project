@@ -16,14 +16,36 @@ Hold your pose steady. An unstable pose gets up to 1.5 extra seconds;
 if still invalid, the round is canceled without scoring.
 R / New match resets. Q quits.
 
-TRAIN YOUR OWN SVM (optional; pretrained mode works immediately)
+TRAIN YOUR OWN MODELS (optional; pretrained mode works immediately)
 G / Guided training opens the step-by-step collector.
 Capture / C / SPACE records 40 samples of the displayed pose.
 Click Next between rock, paper, scissors, and each of 3 sessions.
 Keep the correct pose during capture; reposition between sessions.
 Cancel capture or Back / ESC stops collection but keeps saved samples.
-T / Train trains the SVM. M switches the game's classifier.
-Old 1 / 2 / 3 / N capture keys are no longer used.
+T / Train trains the classical SVM. N / Train neural trains the landmark MLP.
+M cycles among available game classifiers. E opens Teacher View; V switches
+between its SVM and neural evaluation reports.
+Old numbered 1 / 2 / 3 capture shortcuts are removed. N is now reserved for
+Train neural; use the on-screen Next controls, not the former N capture key.
+
+The MLP trains on 63 normalized hand-landmark numbers (21 xyz points), not
+raw images. It uses hidden layers 128/64/32, ReLU and Adam. At least 3
+complete sessions with at least 20 samples per class per session are needed.
+It holds out the newest complete session and saves that exact tested model;
+the SVM remains a separate workflow that refits on all complete sessions.
+Metrics and the actual training loss curve describe successful real-data runs
+only. The model embeds its authoritative report; data/neural_evaluation.json
+is a convenient sidecar copy. Confidence is not accuracy; a small personal
+dataset does not establish general results. The model loads at startup without
+retraining. Training runs in the background; wait until it completes before
+starting a round, capturing, or changing modes. Closing releases the camera,
+but a fit already underway may finish saving before Python exits.
+
+For command-line help/training: .venv\Scripts\python.exe train_neural.py --help
+or double-click train_neural.bat. The project venv is used; no global install.
+Defaults are root-relative data/samples.csv, data/neural_model.npz, and
+data/neural_evaluation.json. No raw sample images or credentials belong in
+public project documentation.
 
 E / Teacher view shows the pipeline and your real evaluation results.
 Back / ESC returns to the game.

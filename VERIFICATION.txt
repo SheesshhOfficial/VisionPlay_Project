@@ -1,21 +1,33 @@
-Build verification - 26 October 2026, polished interface update
+VisionPlay neural upgrade verification - 29 October 2026
 
-PASSED in isolated Linux cloud Python 3.12 environment:
-- 32 automated tests: game rules, hidden random commitment, countdown/grace,
-  first-to-three matches and draws, repeated actions, navigation/capture
-  interruption, camera loss, stability, session holdout, Python/venv guards.
-- Headless app integration: teacher/back/training/cancel/quit, close-button
-  precedence, and resource cleanup. Stub camera/model are software tests only.
-- Independent UI render review of play, countdown, grace, result, training,
-  teacher-empty and teacher-evaluation views; clickable controls in bounds.
-- Official model checksum, native MediaPipe load and blank-frame inference.
-- Pinned dependency installation, pip check, and Python compilation.
+PASSED in isolated Linux cloud Python 3.12 with requirements.txt pins:
+- 51 automated unittest cases, including existing game, capture, controller,
+  headless app tests and new neural training/integration regressions.
+- Synthetic-fixture session holdout, reproducibility, exact sklearn prediction
+  parity (including class ordering), safe NPZ save/load, malformed input,
+  model preservation on training failure, and report-sidecar failure handling.
+- Background result/error handling, unavailable/active-round/busy mode guards,
+  invalid landmarks, stale samples, and embedded-only evaluation loading.
+- pip check, Python compilation and git diff --check.
+- Official Google gesture model load and blank-frame native inference.
+- Rendered play, training and neural teacher views reviewed for layout;
+  review fixtures are artificial UI input, not measured gesture performance.
 
-Not verified here: this upgraded app on a physical Windows webcam, Windows
-mouse/display behavior, or real-gesture recognition accuracy. A prior version
-has been webcam-tested, but that does not validate this new interface.
-Run setup.bat then test a live round and guided capture before class.
+NOT VERIFIED:
+- Physical Windows webcam operation or Windows BAT execution in this upgrade.
+- Training/evaluation against the owner's real data/samples.csv.
+- Real-world recognition accuracy, cross-person generalisation, or calibration.
 
-No real or synthetic capture dataset, fabricated report, model binary,
-private screenshot or environment is published. Test data is temporary only.
-The official pretrained model is fetched and checksum-verified during setup.
+PC execution preflight was attempted twice but environment setup failed before
+any command ran. No local owner files or report.doc were modified.
+
+The neural classifier is a landmark MLP (63 -> 128 -> 64 -> 32 -> 3), not a
+raw-image CNN. It trains on earlier complete capture sessions and saves the
+exact model evaluated on the newest held-out session. No fake trained model,
+personal dataset, synthetic accuracy report, model binary, or screenshot is
+published. Runtime-generated private artifacts stay under ignored data/.
+
+To validate locally: preserve local edits, obtain this source update, run
+setup.bat if needed, then train_neural.bat with three complete saved sessions.
+Open runme.bat, inspect E then V for neural results, and M to choose neural mode.
+The tests use temporary synthetic data only to check software behavior.

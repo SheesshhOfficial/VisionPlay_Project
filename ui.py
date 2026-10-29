@@ -96,7 +96,8 @@ def render(frame, state):
         label('GAME MODE: '+str(state.get('mode','PRETRAINED DL')),25,682,.52,GREEN)
         label(f'DL: {state.get("dl_label","no hand")}  score {state.get("dl_score",0):.2f}',25,710,.48)
         label('SVM: '+str(state.get('svm_label') or ('no hand' if state.get('svm_ready') else 'not trained')),360,710,.48)
-        label('DL score is confidence, not measured accuracy.',700,624,.47,MUTED)
+        label('NEURAL: '+str(state.get('neural_label') or ('no hand' if state.get('neural_ready') else 'not trained'))+f'  score {state.get("neural_score",0):.2f}',700,602,.43)
+        label('Neural score = model output, not accuracy.',700,624,.47,MUTED)
         button('play','SPACE  Start round',700,651,190)
         button('reset','R  New match',905,651,160,BLUE)
         button('mode','M  Switch mode',1080,651,180,BLUE)
@@ -105,9 +106,10 @@ def render(frame, state):
         button('quit','Q  Quit',1100,709,160,MUTED)
     elif screen=='training':
         panel(690,80,570,560)
-        label('TRAIN YOUR OWN SVM',712,119,.75,GREEN,2)
+        label('TRAIN YOUR CLASSIFIERS',712,119,.75,GREEN,2)
         wrap('Capture real examples. Every session includes all three poses.',712,154,57,.5,MUTED,2)
         label(f'Complete sessions saved: {tr.get("complete_sessions",0)} / 3 minimum',712,221,.56)
+        label('Neural MLP: '+str(state.get('neural_status','not trained')),712,242,.43,MUTED)
         label(f'CURRENT SESSION {tr.get("session_index",1)}',712,263,.5,GOLD)
         move=tr.get('label','rock');count=int(tr.get('count',0))
         icon(move,800,367,.78,GREEN)
@@ -121,38 +123,56 @@ def render(frame, state):
         wrap('The label is your instruction, not the AI prediction. Change position between sessions.',712,574,65,.45,MUTED,2)
         button('capture','SPACE  Capture / Next',25,674,230)
         button('train','T  Train + evaluate',275,674,220,GOLD)
-        button('cancel','Cancel capture',515,674,180,MUTED)
-        button('back','Back to game',715,674,180,BLUE)
+        button('train_neural','N  Train neural net',505,674,210,BLUE)
+        button('cancel','Cancel capture',725,674,175,MUTED)
+        button('back','Back to game',910,674,180,BLUE)
         label('Samples are saved locally. Cancel keeps already captured rows.',25,746,.48,MUTED)
     else:
         label('FROM CAMERA TO CLASSROOM',25,98,.85,GOLD,2)
-        steps=[('01 / COMPUTER VISION','OpenCV reads camera frames.','Color conversion + hand overlay.'),('02 / PRETRAINED DL','Google neural models find a hand,','21 landmarks and gesture labels.'),('03 / CLASSICAL ML','Your SVM learns from normalized','DL-extracted landmark features.'),('04 / GAME LOGIC','A fixed random CPU move,','countdown, rules and scoreboard.')]
+        steps=[('01 / COMPUTER VISION','OpenCV reads camera frames.','Color conversion + hand overlay.'),('02 / PRETRAINED DL','Google neural models find a hand,','21 landmarks and gesture labels.'),('03 / YOUR MLP + SVM','Train on pretrained model','landmark features.'),('04 / GAME LOGIC','A fixed random CPU move,','countdown, rules and scoreboard.')]
         for i,(title,a,b) in enumerate(steps):
             x=25+i*315;panel(x,125,300,135)
             label(title,x+13,155,.47,GREEN,1)
             label(a,x+13,196,.43);label(b,x+13,222,.43)
         panel(25,285,770,395);panel(815,285,440,395)
-        label('REAL HELD-OUT SESSION EVALUATION',45,325,.65,GREEN,2)
-        report=state.get('evaluation')
+        neural=state.get('neural_evaluation')
+        show_neural=state.get('teacher_model')=='NEURAL NET'
+        report=neural if show_neural else state.get('evaluation')
+        kind='NEURAL NET' if show_neural else 'SVM'
+        label(f'REAL HELD-OUT {kind} EVALUATION',45,325,.65,GREEN,2)
         if report:
-            label(f'SVM accuracy: {report.get("accuracy",0):.1%}',45,373,.85,GOLD,2)
+            label(f'{kind} accuracy: {report.get("accuracy",0):.1%}',45,373,.85,GOLD,2)
             label(f'Train {report.get("train_samples",0)}  |  Test {report.get("test_samples",0)} samples',45,411,.56)
             label('Rows = true class. Columns = predicted class.',45,448,.5,MUTED)
-            label('                    ROCK       PAPER     SCISSORS',45,486,.5,GREEN)
+            for text,xpos in [('ROCK',246),('PAPER',374),('SCISSORS',500)]: label(text,xpos,486,.5,GREEN)
             for i,row in enumerate(report.get('confusion_matrix_rows_true_columns_predicted',[])):
                 if i>2: break
-                label(f'{("ROCK","PAPER","SCISSORS")[i]:10s}          {row[0]:4d}           {row[1]:4d}           {row[2]:4d}',45,524+i*35,.52)
+                label(('ROCK','PAPER','SCISSORS')[i],45,524+i*35,.52)
+                for val,xpos in zip(row,(246,374,500)): label(f'{val:4d}',xpos,524+i*35,.52)
             label('Small personal dataset, not universal performance.',45,655,.46,MUTED)
         else:
-            wrap('No measured SVM results yet. Open the training wizard, capture three complete sessions, then train.',45,388,65,.65,TEXT,4)
+            wrap('No measured model results yet. Open the training wizard, capture three complete sessions, then train.',45,388,65,.65,TEXT,4)
             label('No invented accuracy. No fake trained model.',45,595,.57,GOLD)
         label('EXPLAIN IT HONESTLY',836,325,.61,GOLD,2)
-        wrap('The neural models are pretrained. You train the SVM, not a raw-image CNN.',836,368,43,.5,TEXT,3)
-        wrap('Evaluation holds out an entire session. Nearby frames are correlated.',836,465,43,.5,TEXT,3)
-        wrap('The live SVM is then refit on all complete sessions. That live model has no independent accuracy score.',836,562,43,.48,MUTED,4)
+        wrap('The pretrained model extracts landmarks. Your MLP trains on them, not raw-image CNN input.',836,368,43,.5,TEXT,3)
+        wrap('Evaluation holds out an entire session; nearby frames are correlated.',836,442,43,.48,TEXT,3)
+        if show_neural and report and report.get('training_loss_curve', report.get('loss_curve')):
+            values=[float(v) for v in report.get('training_loss_curve',report.get('loss_curve',[])) if math.isfinite(float(v))]
+            x0,y0,ww,hh=865,520,330,100
+            cv2.rectangle(out,(x0,y0),(x0+ww,y0+hh),BG,-1)
+            if len(values)>1:
+                lo,hi=min(values),max(values); span=max(hi-lo,1e-9)
+                pts=[(x0+int(i*ww/(len(values)-1)),y0+hh-int((v-lo)/span*hh)) for i,v in enumerate(values)]
+                for a,b in zip(pts,pts[1:]): cv2.line(out,a,b,GOLD,2,cv2.LINE_AA)
+                label(f'{hi:.2f}',x0-35,y0+9,.37,MUTED);label(f'{lo:.2f}',x0-35,y0+hh,.37,MUTED)
+            label('TRAINING LOSS (lower is better)',836,506,.42,GREEN)
+            label('epoch ->',1135,645,.40,MUTED)
+        elif not show_neural:
+            wrap('The live SVM is refit on all complete sessions. Its training score is not independent.',836,523,43,.48,MUTED,4)
         button('back','Back to game',25,705,200)
         button('training','Open training wizard',245,705,240,GOLD)
-        label('Full results: data/evaluation.json   |   Source and viva: TEACHER_GUIDE.md',515,733,.47,MUTED)
+        label('V switches report | data/*evaluation.json',515,733,.47,MUTED)
+        button('teacher_toggle','V  Switch report',1010,705,225,BLUE)
     # Status strip stays separate from controls and uses one concise line.
     wrap(state.get('note',''),25,786,145,.43,MUTED,1)
     return out, buttons

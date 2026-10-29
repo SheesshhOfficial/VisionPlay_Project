@@ -25,9 +25,12 @@ class Controller:
         self.stability = Stability()
         self.screen = 'play'
         self.mode = 'PRETRAINED DL'
+        self.available_modes = ['PRETRAINED DL']
+        self.training_job = None
+        self.teacher_model = 'SVM'
         self.running = True
         self.note = 'One hand, palm toward camera. First to 3 wins the match.'
-    def action(self, action, now, svm_ready=False):
+    def action(self, action, now, svm_ready=False, neural_ready=False):
         if action == 'quit':
             self.game.cancel('Closed without scoring.'); self.wizard.cancel(); self.running=False
         elif action in ('training','teacher','back'):
@@ -36,6 +39,9 @@ class Controller:
             self.stability.clear()
             self.screen = 'play' if action=='back' else action
         elif action == 'play' and self.screen=='play':
+            if self.training_job:
+                self.note='Wait for background training to finish before starting a round.'
+                return
             if self.game.start(now):
                 self.stability.clear()
                 self.note = 'Computer move locked before countdown. Hold your move steady.'
@@ -43,17 +49,28 @@ class Controller:
             self.game.reset(); self.stability.clear()
             self.note = 'New match. First to 3; draws do not count toward five.'
         elif action == 'mode' and self.screen=='play':
-            if self.game.active: self.note='Finish the current round before switching classifiers.'
-            elif not svm_ready: self.note='Train your SVM in Guided Training first.'
+            if self.training_job: self.note='Wait for background training to finish before switching classifiers.'
+            elif self.game.active: self.note='Finish the current round before switching classifiers.'
             else:
-                self.mode='YOUR SVM' if self.mode=='PRETRAINED DL' else 'PRETRAINED DL'
+                modes=['PRETRAINED DL'] + (['YOUR SVM'] if svm_ready else []) + (['YOUR NEURAL NET'] if neural_ready else [])
+                if len(modes)==1: self.note='Train a model in Guided Training first.'; return
+                self.mode=modes[(modes.index(self.mode)+1)%len(modes)] if self.mode in modes else modes[0]
                 self.stability.clear()
-                self.note='SVM chooses one of three classes; unfamiliar gestures can be misclassified.' if self.mode=='YOUR SVM' else 'Pretrained DL: fist, open palm or V sign.'
-        elif action == 'capture' and self.screen=='training': self.wizard.begin(now)
+                self.note=('Your neural net classifies DL-extracted hand landmarks; unfamiliar poses may be misclassified.' if self.mode=='YOUR NEURAL NET' else 'SVM chooses one of three classes; unfamiliar gestures can be misclassified.' if self.mode=='YOUR SVM' else 'Pretrained DL: fist, open palm or V sign.')
+        elif action == 'capture' and self.screen=='training':
+            if self.training_job: self.note='Wait for training to finish before capturing more samples.'
+            else: self.wizard.begin(now)
+        elif action == 'teacher_toggle' and self.screen=='teacher': self.teacher_model='NEURAL NET' if self.teacher_model=='SVM' else 'SVM'
         elif action == 'cancel' and self.screen=='training': self.wizard.cancel()
         elif action == 'train' and self.screen=='training' and not self.wizard.active:
-            return 'train'
+            if self.training_job: self.note='A model is already training.'
+            else: self.training_job='svm'; return 'train'
+        elif action == 'train_neural' and self.screen=='training' and not self.wizard.active:
+            if self.training_job: self.note='A model is already training.'
+            elif self.wizard.completed_sessions < 3: self.note='Need 3 complete sessions before neural training.'
+            else: self.training_job='neural'; return 'train_neural'
         return None
+    def training_finished(self): self.training_job=None
     def camera_lost(self):
         self.game.cancel('Camera disconnected; round canceled without score.')
         self.wizard.cancel(); self.stability.clear(); self.running=False

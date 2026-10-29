@@ -1,6 +1,6 @@
 # VisionPlay — Rock, Paper, Scissors with AI
 
-A small webcam project combining **computer vision, pretrained deep learning, and a trainable classical machine-learning classifier**. Play immediately with Google's pretrained gesture recognizer; collect your own examples to demonstrate SVM training.
+A small webcam project combining **computer vision, pretrained deep learning, and trainable classifiers**. Play with Google's pretrained gesture recognizer; collect examples to train a classical SVM and an experimental neural MLP on hand landmarks.
 
 > **Python 3.13 installed?** Keep it. Install **64-bit Python 3.11 alongside it** using the link below. This project supports Python 3.10–3.12 only; setup automatically prefers 3.11.
 
@@ -28,7 +28,7 @@ After successful setup, the webcam demo runs locally without an Internet connect
 
 Click **Play** or press **Space**. The computer locks its random move **before** the three-second countdown and keeps it hidden until the reveal. Hold your gesture steady. If recognition is not stable at the countdown's end, you get up to **1.5 extra seconds** to settle your hand; if it is still not valid and stable, the round is canceled with **no score**. Start another round when ready. Click **New match** or press **R** to reset.
 
-The computer does not predict your strategy. The screen shows both available classifier predictions; **M** chooses which one controls your move.
+The computer does not predict your strategy. The screen shows available classifier predictions; **M** chooses which ready model controls your move.
 
 ## Mouse and keyboard controls
 
@@ -40,15 +40,17 @@ Use the on-screen buttons, or click the window and use these shortcuts:
 | **G** | Open guided sample collection |
 | **C** | Capture the current stage in guided training |
 | **T** | Train/evaluate the SVM from saved samples |
+| **N** | Train/evaluate the neural MLP from saved samples (training wizard) |
 | **E** | Open teacher view: pipeline, held-out results, and confusion matrix |
-| **M** | Switch pretrained/SVM game mode |
+| **M** | Cycle among available pretrained/SVM/neural game modes |
+| **V** | In teacher view, switch between SVM and neural evaluation reports |
 | **R** | Start a new match |
 | **Escape** | Back from teacher/training view; stops an active capture without deleting saved samples |
 | **Q** | Quit |
 
-Guided collection uses explicit **Next** buttons between stages and sessions—there is no automatic advance into the next pose. The old **1/2/3/N** capture shortcuts are no longer used.
+Guided collection uses explicit **Next** buttons between stages and sessions—there is no automatic advance into the next pose. The old numbered **1/2/3** capture shortcuts are removed; **N** is now reserved for neural training, not pose capture.
 
-## Add your classical ML model — guided training
+## Train your classifiers — guided training
 
 A trained SVM is not supplied: **you create it from real examples**. Pretrained mode works immediately after setup.
 
@@ -59,6 +61,25 @@ A trained SVM is not supplied: **you create it from real examples**. Pretrained 
 5. Click **Train** or press **T**. For compatibility with existing data, training requires at least **three complete sessions**, each with **20 or more examples of every class**; the new guided flow targets 40 per class per session.
 6. Click **Teacher view** or press **E** for the pipeline and your measured results (also saved in `data/evaluation.json`). Return with **Back/Escape**, then switch to **SVM** using its button or **M** and play.
 
+### Neural landmark model (experimental)
+
+The neural option is a **scikit-learn MLP classifier** trained by you on the same collected examples. It is not a raw-image CNN: MediaPipe first estimates the hand, then VisionPlay supplies **63 normalized x/y/z landmark values** (21 points × 3 coordinates) to the MLP. The network has hidden layers **128, 64, 32**, ReLU activations, and Adam optimization. It is a small CPU-friendly educational model, not a general-purpose gesture model. It introduces no additional package beyond the existing NumPy/scikit-learn dependencies.
+
+In the guided-training screen, choose **Train neural** or press **N**; use **T** for the separate SVM workflow. Neural training needs at least **three complete capture sessions**, with **20 or more examples of every class in each session**. It uses all but the **newest complete session** for fitting and holds that newest session out for evaluation. The saved `data/neural_model.npz` is the exact model tested on that holdout—there is **no all-data refit**. By contrast, the SVM keeps its existing behavior: evaluate on the newest complete session, then refit the live SVM on all complete sessions.
+
+The neural report contains metrics, confusion matrix, and the training loss curve from that actual run. The model artifact embeds the authoritative evaluation with the exact tested parameters; `data/neural_evaluation.json` is a convenient sidecar copy. A sidecar write problem does not discard a valid model or its embedded report. No score or loss curve is bundled or invented. If there are no eligible sessions, training reports that requirement instead of reporting a result. A model's class confidence is not the same as accuracy. Adjacent webcam frames are correlated, and one person's small dataset does not establish performance across people, hands, cameras, or lighting. Do not repeatedly tune against the same held-out session.
+
+Training runs in the background so the camera window stays responsive. While a fit is running, starting a round, capturing another batch, and changing game mode are blocked; wait for the on-screen training status to clear. Closing the window releases the camera. A fit already underway cannot be interrupted safely and may finish saving its model/report before Python exits.
+
+For command-line training, open Command Prompt in the project folder and run:
+
+```bat
+.venv\Scripts\python.exe train_neural.py --help
+.venv\Scripts\python.exe train_neural.py
+```
+
+The command defaults to project-relative `data/samples.csv`, `data/neural_model.npz`, and `data/neural_evaluation.json`; optional `--data`, `--model`, and `--report` flags override them. Double-click `train_neural.bat` to use the same project virtual environment; no packages are installed globally. At game startup, an existing numeric-only NPZ model is loaded without retraining, and its embedded evaluation is authoritative if the sidecar is absent or stale. The saved model enables neural mode in the game's **M** cycle. The in-game confidence cutoff is a decision threshold, not a guarantee of accuracy.
+
 The newest complete session is held out; earlier complete sessions train the evaluation model. Incomplete sessions are excluded. After evaluation, the live SVM is refit on all complete sessions. The held-out score therefore describes the evaluation model, **not an independent test of the refitted live model**.
 
 Nearby video frames are correlated. A session split reduces leakage but a small personal dataset does not establish accuracy for new people or conditions. Do not repeatedly tune against the same holdout; test improvements on a genuinely new session.
@@ -66,8 +87,9 @@ Nearby video frames are correlated. A session split reduces leakage but a small 
 ## What each subject contributes
 
 - **Computer vision (OpenCV):** camera frames, image conversion, live display, and hand-landmark overlays.
-- **Deep learning (MediaPipe):** pretrained neural models locate a hand, estimate 21 landmarks, and recognize supported gestures. No neural network is trained from scratch in this project.
-- **Classical machine learning (scikit-learn):** an SVM learns your three gesture classes from normalized landmark coordinates. These are **deep-learning-extracted features**, not raw pixels. This is a hybrid pipeline, not a separately trained image CNN.
+- **Pretrained deep learning (MediaPipe):** supplied neural models locate a hand, estimate 21 landmarks, and recognize supported gestures.
+- **Your neural model (scikit-learn MLP):** a small MLP learns three classes from the 63 DL-extracted normalized landmark coordinates; it is not a raw-image CNN.
+- **Classical machine learning (scikit-learn SVM):** the separate SVM learns the same three classes from normalized landmark coordinates, retaining its distinct all-complete-session refit behavior.
 - **Ordinary programming:** countdown, random computer move, game rules, and scorekeeping. These are not machine learning.
 
 See **`TEACHER_GUIDE.md`** for a one-minute demonstration script and viva questions.
@@ -76,7 +98,7 @@ See **`TEACHER_GUIDE.md`** for a one-minute demonstration script and viva questi
 
 ## Privacy and files
 
-Webcam frames stay in memory on your laptop; this app does not record or upload images. Capturing examples writes labeled numerical hand landmarks locally in `data/samples.csv`. Training saves `data/evaluation.json`; the SVM is refit in memory from `data/samples.csv` on startup when sufficient data exists. Incomplete sessions are excluded from fitting and evaluation. No serialized SVM model is loaded. Network access is used by setup to obtain dependencies and Google's pretrained model, not to analyze your webcam.
+Webcam frames stay in memory on your laptop; this app does not record or upload images. Capturing examples writes labeled numerical hand landmarks locally in `data/samples.csv`. SVM training saves `data/evaluation.json`; the SVM is refit in memory from `data/samples.csv` on startup when sufficient data exists. Neural training separately saves `data/neural_evaluation.json` and a numeric-only `data/neural_model.npz`; its exported model is the exact held-out-tested model, not refit on the holdout. Incomplete sessions are excluded. Network access is used by setup to obtain dependencies and Google's pretrained model, not to analyze your webcam.
 
 ## How the virtual environment works
 
